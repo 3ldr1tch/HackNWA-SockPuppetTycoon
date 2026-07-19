@@ -1,0 +1,184 @@
+# ==========================================================
+# BadgeOS
+# Git Ignore
+# ==========================================================
+
+# ----------------------------------------------------------
+# Python
+# ----------------------------------------------------------
+
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution
+build/
+dist/
+*.egg-info/
+
+# Virtual Environments
+.venv/
+venv/
+env/
+ENV/
+
+# Pip
+pip-wheel-metadata/
+
+# Pytest
+.pytest_cache/
+
+# Coverage
+.coverage
+.coverage.*
+htmlcov/
+
+# MyPy
+.mypy_cache/
+
+# Ruff
+.ruff_cache/
+
+# Pyright
+.pyright/
+
+# VS Code Testing
+.python-version
+
+# ----------------------------------------------------------
+# Editors / IDEs
+# ----------------------------------------------------------
+
+.vscode/
+!.vscode/extensions.json
+!.vscode/settings.json
+
+.idea/
+
+*.swp
+*.swo
+*~
+
+# ----------------------------------------------------------
+# Operating System
+# ----------------------------------------------------------
+
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# macOS
+.AppleDouble
+.LSOverride
+
+# Linux
+.directory
+
+# Windows
+ehthumbs.db
+
+# ----------------------------------------------------------
+# CircuitPython
+# ----------------------------------------------------------
+
+# CircuitPython cache
+.fseventsd/
+.Trashes/
+
+# Temporary upload files
+*.uf2
+
+# Automatically generated configuration
+badgeos/config_local.py
+badgeos/hardware_profile.py
+
+# Local settings (generated after probing)
+badgeos/settings_local.toml
+
+# ----------------------------------------------------------
+# Logs
+# ----------------------------------------------------------
+
+*.log
+logs/
+
+# ----------------------------------------------------------
+# Temporary Files
+# ----------------------------------------------------------
+
+*.tmp
+*.temp
+*.bak
+*.old
+
+# ----------------------------------------------------------
+# Build Artifacts
+# ----------------------------------------------------------
+
+release/
+firmware/
+artifacts/
+
+# ----------------------------------------------------------
+# Documentation Build
+# ----------------------------------------------------------
+
+docs/_build/
+
+# ----------------------------------------------------------
+# Jupyter (if used)
+# ----------------------------------------------------------
+
+.ipynb_checkpoints/
+
+# ----------------------------------------------------------
+# mpremote / rshell temp files
+# ----------------------------------------------------------
+
+.mpy/
+.circup/
+
+# ----------------------------------------------------------
+# Local test scripts
+# ----------------------------------------------------------
+
+test_local.py
+scratch.py
+playground.py
+
+# ----------------------------------------------------------
+# Secrets / Credentials
+# ----------------------------------------------------------
+
+.env
+.env.*
+*.pem
+*.key
+
+# Never commit Wi-Fi credentials
+settings.toml
+
+# ----------------------------------------------------------
+# Generated hardware probe output
+# ----------------------------------------------------------
+
+hardware_report.json
+hardware_report.txt
+hardware_profile.json
+
+# ----------------------------------------------------------
+# Future plugin cache
+# ----------------------------------------------------------
+
+plugins/__pycache__/
+
+# ----------------------------------------------------------
+# Miscellaneous
+# ----------------------------------------------------------
+
+*.orig
+*.rej
+
+# ==========================================================
+# End of File
+# ==========================================================
