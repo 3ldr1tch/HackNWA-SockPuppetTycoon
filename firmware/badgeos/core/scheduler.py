@@ -17,6 +17,8 @@ import time
 
 from badgeos.logger import get_logger
 
+from badgeos.core.service import Service
+
 log = get_logger("SCHEDULER")
 
 
@@ -41,23 +43,18 @@ class Scheduler:
     # ---------------------------------------------------------
 
     def register(self, service):
-        """
-        Register a service.
+    """
+    Register a Service instance with the scheduler.
+    """
 
-        The service object must provide:
+    if not isinstance(service, Service):
+        raise TypeError(
+            "Registered object must inherit from Service."
+        )
 
-            initialize()
-            update()
-            shutdown()
+    log.info(f"Registering service: {service.name}")
 
-        and a 'name' attribute.
-        """
-
-        name = getattr(service, "name", service.__class__.__name__)
-
-        log.info(f"Registering service: {name}")
-
-        self.services.append(service)
+    self.services.append(service)
 
     # ---------------------------------------------------------
     # Initialization
