@@ -1,12 +1,12 @@
-"""
-BadgeOS boot.py
+import storage
+import usb_cdc
 
-Minimal boot configuration for development.
-"""
+usb_cdc.enable(console=True, data=True)
 
-import supervisor
+# Explicitly export CIRCUITPY over USB.
+storage.enable_usb_drive()
 
-# Keep auto reload enabled while developing.
-supervisor.runtime.autoreload = True
+# Make the internal filesystem writable.
+storage.remount("/", readonly=False)
 
-print("BadgeOS boot")
+print("Boot OK")
