@@ -1,0 +1,5 @@
+repl.interrupt()
+repl.enter_raw()
+repl.exec("print('hello')")
+repl.soft_reset()
+repl.exit_raw()
