@@ -1,64 +1,45 @@
 """
 BadgeOS Scheduler
 
-A cooperative scheduler for BadgeOS.
-
-The scheduler manages a collection of services. Each service is
-initialized once, updated every scheduler tick, and optionally
-shut down when the scheduler exits.
-
-Designed for CircuitPython.
-
-Version:
-    0.1.0-dev
+Cooperative scheduler for BadgeOS services.
 """
 
 import time
 
+from badgeos.core.service import Service
 from badgeos.logger import get_logger
 
-from badgeos.core.service import Service
 
 log = get_logger("SCHEDULER")
 
 
 class Scheduler:
     """
-    Cooperative task scheduler.
+    Cooperative BadgeOS service scheduler.
     """
 
     def __init__(self, tick_interval=0.01):
-        """
-        Parameters
-        ----------
-        tick_interval : float
-            Delay between scheduler iterations in seconds.
-        """
         self.tick_interval = tick_interval
         self.services = []
         self.running = False
 
-    # ---------------------------------------------------------
-    # Service Management
-    # ---------------------------------------------------------
-
     def register(self, service):
-    """
-    Register a Service instance with the scheduler.
-    """
+        """
+        Register a Service with the scheduler.
+        """
 
-    if not isinstance(service, Service):
-        raise TypeError(
-            "Registered object must inherit from Service."
+        if not isinstance(service, Service):
+            raise TypeError(
+                "Registered object must inherit from Service."
+            )
+
+        log.info(
+            "Registering service: {}".format(
+                service.name
+            )
         )
 
-    log.info(f"Registering service: {service.name}")
-
-    self.services.append(service)
-
-    # ---------------------------------------------------------
-    # Initialization
-    # ---------------------------------------------------------
+        self.services.append(service)
 
     def initialize(self):
         """
@@ -68,26 +49,28 @@ class Scheduler:
         log.info("Initializing services")
 
         for service in self.services:
-
             try:
-
                 service.initialize()
 
-                log.info(f"{service.name} initialized")
-
-            except Exception as exc:
-
-                log.error(
-                    f"{service.name} failed to initialize: {exc}"
+                log.info(
+                    "{} initialized".format(
+                        service.name
+                    )
                 )
 
-    # ---------------------------------------------------------
-    # Main Loop
-    # ---------------------------------------------------------
+            except Exception as exc:
+                service.enabled = False
+
+                log.error(
+                    "{} failed to initialize: {}".format(
+                        service.name,
+                        exc,
+                    )
+                )
 
     def run(self):
         """
-        Start the scheduler.
+        Start the cooperative scheduler.
         """
 
         self.running = True
@@ -96,37 +79,36 @@ class Scheduler:
 
         log.info("Scheduler started")
 
-        while self.running:
+        try:
+            while self.running:
+                start = time.monotonic()
 
-            start = time.monotonic()
+                for service in self.services:
+                    if not service.enabled:
+                        continue
 
-            for service in self.services:
+                    try:
+                        service.update()
 
-                if not getattr(service, "enabled", True):
-                    continue
+                    except Exception as exc:
+                        log.error(
+                            "{} update failed: {}".format(
+                                service.name,
+                                exc,
+                            )
+                        )
 
-                try:
+                elapsed = time.monotonic() - start
+                remaining = self.tick_interval - elapsed
 
-                    service.update()
+                if remaining > 0:
+                    time.sleep(remaining)
 
-                except Exception as exc:
+        except KeyboardInterrupt:
+            log.info("Scheduler interrupted")
 
-                    log.error(
-                        f"{service.name}: {exc}"
-                    )
-
-            elapsed = time.monotonic() - start
-
-            remaining = self.tick_interval - elapsed
-
-            if remaining > 0:
-                time.sleep(remaining)
-
-        self.shutdown()
-
-    # ---------------------------------------------------------
-    # Shutdown
-    # ---------------------------------------------------------
+        finally:
+            self.shutdown()
 
     def stop(self):
         """
@@ -137,21 +119,21 @@ class Scheduler:
 
     def shutdown(self):
         """
-        Shut down all services.
+        Shut down registered services in reverse order.
         """
 
         log.info("Stopping services")
 
         for service in reversed(self.services):
-
             try:
-
                 service.shutdown()
 
             except Exception as exc:
-
                 log.error(
-                    f"{service.name}: {exc}"
+                    "{} shutdown failed: {}".format(
+                        service.name,
+                        exc,
+                    )
                 )
 
         log.info("Scheduler stopped")

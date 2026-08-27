@@ -1,40 +1,68 @@
 """
-BadgeOS
+BadgeOS Heartbeat Service.
 
-Heartbeat Service
-
-Provides a visible heartbeat using the onboard NeoPixel.
+Provides a periodic visual indication that the scheduler is alive.
 """
 
+import time
+
 from badgeos.core import Service
-from badgeos.drivers import LED
 
 
 class HeartbeatService(Service):
-    """
-    Simple heartbeat that blinks the onboard LED.
-    """
+    """Blink the NeoPixel ring at a configurable interval."""
 
-    def __init__(self, interval=1.0):
+    def __init__(self, led, interval=1.0):
+        super().__init__("Heartbeat")
 
-        super().__init__(interval)
+        self.led = led
+        self.interval = interval
 
-        self.led = LED()
+        self._last_toggle = 0.0
         self._state = False
+        self._counter = 0
 
-    def start(self):
+    def initialize(self):
+        super().initialize()
+
+        self._state = False
+        self._counter = 0
+        self._last_toggle = time.monotonic()
 
         self.led.off()
 
-    def update(self):
+        self.log.info(
+            "Heartbeat initialized ({}s interval)".format(
+                self.interval
+            )
+        )
 
+    def update(self):
+        now = time.monotonic()
+
+        if (now - self._last_toggle) < self.interval:
+            return
+
+        self._last_toggle = now
         self._state = not self._state
+        self._counter += 1
 
         if self._state:
             self.led.green()
         else:
             self.led.off()
 
-    def stop(self):
+        self.log.info(
+            "Heartbeat #{}".format(self._counter)
+        )
 
+    def shutdown(self):
         self.led.off()
+
+        self.log.info(
+            "Heartbeat stopped after {} toggles".format(
+                self._counter
+            )
+        )
+
+        super().shutdown()

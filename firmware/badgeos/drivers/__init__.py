@@ -2,8 +2,8 @@
 BadgeOS hardware drivers.
 """
 
-from .led import LED
+from .led import LEDDriver
 
 __all__ = [
-    "LED",
+    "LEDDriver",
 ]

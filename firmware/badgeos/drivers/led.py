@@ -1,60 +1,73 @@
 """
-BadgeOS
+BadgeOS NeoPixel ring driver.
 
-drivers/led.py
-
-NeoPixel LED driver.
+HackNWA SockPuppetTycoon badge:
+    12 NeoPixels
+    GPIO GP11
 """
 
-import board
 import neopixel
 
+from badgeos.config import (
+    NEOPIXEL_BRIGHTNESS,
+    NEOPIXEL_COUNT,
+    NEOPIXEL_PIN,
+)
 
-class LED:
 
-    def __init__(self, brightness=0.2):
+class LEDDriver:
+    """Driver for the badge's 12-pixel NeoPixel ring."""
 
-        self.pixel = neopixel.NeoPixel(
-            board.NEOPIXEL,
-            1,
+    def __init__(
+        self,
+        brightness=NEOPIXEL_BRIGHTNESS,
+    ):
+        self.pixel_count = NEOPIXEL_COUNT
+
+        self.pixels = neopixel.NeoPixel(
+            NEOPIXEL_PIN,
+            NEOPIXEL_COUNT,
             brightness=brightness,
-            auto_write=True,
+            auto_write=False,
         )
 
         self.off()
 
-    def set(self, r, g, b):
+    def fill(self, color):
+        self.pixels.fill(color)
+        self.pixels.show()
 
-        self.pixel[0] = (r, g, b)
+    def set_pixel(self, index, color):
+        if index < 0 or index >= self.pixel_count:
+            raise ValueError("NeoPixel index out of range")
+
+        self.pixels[index] = color
+        self.pixels.show()
 
     def off(self):
-
-        self.set(0, 0, 0)
+        self.fill((0, 0, 0))
 
     def red(self):
-
-        self.set(255, 0, 0)
+        self.fill((255, 0, 0))
 
     def green(self):
-
-        self.set(0, 255, 0)
+        self.fill((0, 255, 0))
 
     def blue(self):
-
-        self.set(0, 0, 255)
+        self.fill((0, 0, 255))
 
     def yellow(self):
-
-        self.set(255, 255, 0)
+        self.fill((255, 255, 0))
 
     def cyan(self):
-
-        self.set(0, 255, 255)
+        self.fill((0, 255, 255))
 
     def magenta(self):
-
-        self.set(255, 0, 255)
+        self.fill((255, 0, 255))
 
     def white(self):
+        self.fill((255, 255, 255))
 
-        self.set(255, 255, 255)
+    def deinit(self):
+        self.off()
+        self.pixels.deinit()

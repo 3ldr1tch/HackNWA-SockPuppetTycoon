@@ -1,13 +1,7 @@
 """
 BadgeOS Service Base Class
 
-Defines the common lifecycle for all BadgeOS services.
-
-Every long-running subsystem should inherit from Service and
-override the methods it needs.
-
-Version:
-    0.1.0-dev
+Common lifecycle interface for BadgeOS services.
 """
 
 from badgeos.logger import get_logger
@@ -15,107 +9,60 @@ from badgeos.logger import get_logger
 
 class Service:
     """
-    Base class for BadgeOS services.
-
-    Lifecycle:
-
-        initialize()
-            Called once when the scheduler starts.
-
-        update()
-            Called every scheduler tick while enabled.
-
-        shutdown()
-            Called once when the scheduler stops.
+    Base class for scheduler-managed BadgeOS services.
     """
 
     def __init__(self, name=None):
-        """
-        Initialize the service.
-
-        Parameters
-        ----------
-        name : str, optional
-            Human-readable service name.
-        """
-
         self.name = name or self.__class__.__name__
+
         self.enabled = True
         self.initialized = False
 
         self.log = get_logger(self.name)
 
-    # ---------------------------------------------------------
-    # Lifecycle
-    # ---------------------------------------------------------
-
     def initialize(self):
         """
         Initialize the service.
 
-        Override in subclasses.
+        Subclasses may override this method.
         """
 
         self.initialized = True
 
     def update(self):
         """
-        Execute one scheduler tick.
+        Execute one scheduler update.
 
-        Override in subclasses.
+        Subclasses override this method.
         """
 
         pass
 
     def shutdown(self):
         """
-        Shutdown the service.
+        Shut down the service.
 
-        Override in subclasses.
+        Subclasses may override this method.
         """
 
         self.initialized = False
 
-    # ---------------------------------------------------------
-    # State
-    # ---------------------------------------------------------
-
     def enable(self):
-        """
-        Enable scheduler updates.
-        """
-
         self.enabled = True
         self.log.info("Enabled")
 
     def disable(self):
-        """
-        Disable scheduler updates.
-        """
-
         self.enabled = False
         self.log.info("Disabled")
 
     def toggle(self):
-        """
-        Toggle enabled state.
-        """
-
         if self.enabled:
             self.disable()
         else:
             self.enable()
 
-    # ---------------------------------------------------------
-    # Information
-    # ---------------------------------------------------------
-
     @property
     def status(self):
-        """
-        Return service status information.
-        """
-
         return {
             "name": self.name,
             "enabled": self.enabled,
@@ -123,13 +70,10 @@ class Service:
         }
 
     def __repr__(self):
-        """
-        Developer-friendly representation.
-        """
-
         return (
-            f"<Service "
-            f"name='{self.name}' "
-            f"enabled={self.enabled} "
-            f"initialized={self.initialized}>"
+            "<Service name='{}' enabled={} initialized={}>".format(
+                self.name,
+                self.enabled,
+                self.initialized,
+            )
         )

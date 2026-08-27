@@ -1,24 +1,17 @@
 """
-BadgeOS
-
-Main application entry point.
+BadgeOS entry point.
 """
 
-import gc
 import sys
 
-from badgeos.core import Scheduler
+from badgeos.application import Application
 from badgeos.logger import get_logger
-from badgeos.services import HeartbeatService
-from badgeos.version import VERSION, CODENAME
+from badgeos.version import CODENAME, VERSION
 
 log = get_logger("APP")
 
 
 def startup():
-    """
-    Display startup information.
-    """
 
     print()
     print("=" * 60)
@@ -31,32 +24,11 @@ def startup():
     print(sys.version)
     print()
 
-    log.info("Startup complete")
-    log.info(f"Free RAM: {gc.mem_free()} bytes")
-    print()
-
-
-def build_scheduler():
-    """
-    Create and configure the BadgeOS scheduler.
-    """
-
-    scheduler = Scheduler()
-
-    scheduler.register(
-        HeartbeatService(interval=1.0)
-    )
-
-    return scheduler
-
 
 def main():
-    """
-    BadgeOS entry point.
-    """
 
     startup()
 
-    scheduler = build_scheduler()
+    app = Application()
 
-    scheduler.run()
+    app.run()
