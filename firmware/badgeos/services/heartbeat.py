@@ -56,6 +56,30 @@ class HeartbeatService(Service):
             "Heartbeat #{}".format(self._counter)
         )
 
+    def enable(self):
+        if self.enabled:
+            return
+
+        self.enabled = True
+
+        self._state = False
+        self._last_toggle = time.monotonic()
+
+        self.led.off()
+
+        self.log.info("Enabled")
+
+    def disable(self):
+        if not self.enabled:
+            return
+
+        self.enabled = False
+        self._state = False
+
+        self.led.off()
+
+        self.log.info("Disabled")
+
     def shutdown(self):
         self.led.off()
 
