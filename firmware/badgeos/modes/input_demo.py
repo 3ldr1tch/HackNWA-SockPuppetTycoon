@@ -1,5 +1,5 @@
 """
-BadgeOS Input Demo Service.
+BadgeOS Input Demo Mode.
 
 Demonstrates event-driven gameplay-style input using the NeoPixel ring.
 
@@ -8,11 +8,12 @@ Controls:
     long press  -> cycle active color
 """
 
-from badgeos.core import Service
+from badgeos.core import Mode
+from badgeos.logger import get_logger
 
 
-class InputDemoService(Service):
-    """Simple interactive LED demo driven by button events."""
+class InputDemoMode(Mode):
+    """Simple interactive LED demo."""
 
     COLORS = (
         (0, 255, 0),
@@ -34,11 +35,15 @@ class InputDemoService(Service):
         self.events = events
         self.led = led
 
+        self.log = get_logger(
+            self.name
+        )
+
         self.position = 0
         self.color_index = 0
 
-    def initialize(self):
-        super().initialize()
+    def start(self):
+        super().start()
 
         self.position = 0
         self.color_index = 0
@@ -56,7 +61,7 @@ class InputDemoService(Service):
         self._render()
 
         self.log.info(
-            "Input demo initialized"
+            "Input demo started"
         )
 
         self.log.info(
@@ -68,6 +73,9 @@ class InputDemoService(Service):
         event_name,
         data,
     ):
+        if not self.active:
+            return
+
         self.position += 1
 
         if self.position >= self.led.pixel_count:
@@ -86,6 +94,9 @@ class InputDemoService(Service):
         event_name,
         data,
     ):
+        if not self.active:
+            return
+
         self.color_index += 1
 
         if self.color_index >= len(self.COLORS):
@@ -114,7 +125,7 @@ class InputDemoService(Service):
     def update(self):
         pass
 
-    def shutdown(self):
+    def stop(self):
         self.events.unsubscribe(
             "button.short_press",
             self._on_short_press,
@@ -131,4 +142,4 @@ class InputDemoService(Service):
             "Input demo stopped"
         )
 
-        super().shutdown()
+        super().stop()
