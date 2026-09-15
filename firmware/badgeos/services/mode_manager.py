@@ -1,8 +1,8 @@
 """
 BadgeOS Mode Manager Service.
 
-Owns the currently active interactive mode and provides a controlled
-lifecycle for switching between BadgeOS modes.
+Owns registered interactive modes and controls the lifecycle of the
+currently active mode.
 """
 
 from badgeos.core import Mode
@@ -10,13 +10,87 @@ from badgeos.core import Service
 
 
 class ModeManagerService(Service):
-    """Manage the currently active BadgeOS mode."""
+    """Manage registered BadgeOS modes."""
 
     def __init__(self):
         super().__init__("ModeManager")
 
         self.current_mode = None
+
         self._pending_mode = None
+
+        self._modes = []
+        self._mode_lookup = {}
+
+    def register_mode(self, mode):
+        """
+        Register a mode with the manager.
+        """
+
+        if not isinstance(mode, Mode):
+            raise TypeError(
+                "Mode must inherit from Mode."
+            )
+
+        key = mode.name.lower()
+
+        if key in self._mode_lookup:
+            raise ValueError(
+                "Mode already registered: {}".format(
+                    mode.name
+                )
+            )
+
+        self._modes.append(
+            mode
+        )
+
+        self._mode_lookup[key] = mode
+
+        self.log.info(
+            "Registered mode: {}".format(
+                mode.name
+            )
+        )
+
+    def modes(self):
+        """
+        Return the registered modes.
+        """
+
+        return tuple(
+            self._modes
+        )
+
+    def mode_names(self):
+        """
+        Return registered mode names.
+        """
+
+        names = []
+
+        for mode in self._modes:
+            names.append(
+                mode.name
+            )
+
+        return tuple(
+            names
+        )
+
+    def get_mode(self, name):
+        """
+        Look up a mode by name.
+
+        Matching is case-insensitive.
+        """
+
+        if name is None:
+            return None
+
+        return self._mode_lookup.get(
+            name.lower()
+        )
 
     def initialize(self):
         super().initialize()
@@ -27,10 +101,37 @@ class ModeManagerService(Service):
 
         if self._pending_mode is not None:
             mode = self._pending_mode
+
             self._pending_mode = None
-            self.set_mode(mode)
+
+            self.set_mode(
+                mode
+            )
 
     def set_mode(self, mode):
+        """
+        Switch to a mode.
+
+        mode may be either:
+
+            Mode instance
+            mode name string
+        """
+
+        if isinstance(mode, str):
+            resolved = self.get_mode(
+                mode
+            )
+
+            if resolved is None:
+                raise ValueError(
+                    "Unknown mode: {}".format(
+                        mode
+                    )
+                )
+
+            mode = resolved
+
         if not isinstance(mode, Mode):
             raise TypeError(
                 "Mode must inherit from Mode."
@@ -80,6 +181,7 @@ class ModeManagerService(Service):
         )
 
         self.current_mode.stop()
+
         self.current_mode = None
 
     def update(self):

@@ -1,11 +1,12 @@
 """
 BadgeOS Input Demo Mode.
 
-Demonstrates event-driven gameplay-style input using the NeoPixel ring.
+Demonstrates event-driven positional control using the NeoPixel ring.
 
 Controls:
     short press -> advance active pixel
-    long press  -> cycle active color
+
+Mode switching is handled globally by ModeSwitchService.
 """
 
 from badgeos.core import Mode
@@ -13,17 +14,9 @@ from badgeos.logger import get_logger
 
 
 class InputDemoMode(Mode):
-    """Simple interactive LED demo."""
+    """Move a single illuminated pixel around the LED ring."""
 
-    COLORS = (
-        (0, 255, 0),
-        (0, 0, 255),
-        (255, 0, 0),
-        (255, 255, 0),
-        (0, 255, 255),
-        (255, 0, 255),
-        (255, 255, 255),
-    )
+    COLOR = (0, 255, 0)
 
     def __init__(
         self,
@@ -40,22 +33,15 @@ class InputDemoMode(Mode):
         )
 
         self.position = 0
-        self.color_index = 0
 
     def start(self):
         super().start()
 
         self.position = 0
-        self.color_index = 0
 
         self.events.subscribe(
             "button.short_press",
             self._on_short_press,
-        )
-
-        self.events.subscribe(
-            "button.long_press",
-            self._on_long_press,
         )
 
         self._render()
@@ -65,7 +51,7 @@ class InputDemoMode(Mode):
         )
 
         self.log.info(
-            "Short press moves pixel; long press changes color"
+            "Short press moves pixel"
         )
 
     def _on_short_press(
@@ -89,37 +75,12 @@ class InputDemoMode(Mode):
             )
         )
 
-    def _on_long_press(
-        self,
-        event_name,
-        data,
-    ):
-        if not self.active:
-            return
-
-        self.color_index += 1
-
-        if self.color_index >= len(self.COLORS):
-            self.color_index = 0
-
-        self._render()
-
-        self.log.info(
-            "Color index {}".format(
-                self.color_index
-            )
-        )
-
     def _render(self):
-        color = self.COLORS[
-            self.color_index
-        ]
-
         self.led.off()
 
         self.led.set_pixel(
             self.position,
-            color,
+            self.COLOR,
         )
 
     def update(self):
@@ -129,11 +90,6 @@ class InputDemoMode(Mode):
         self.events.unsubscribe(
             "button.short_press",
             self._on_short_press,
-        )
-
-        self.events.unsubscribe(
-            "button.long_press",
-            self._on_long_press,
         )
 
         self.led.off()
