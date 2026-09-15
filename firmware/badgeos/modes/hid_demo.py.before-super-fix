@@ -255,8 +255,8 @@ class HIDDemoMode(Mode):
         # Open GNOME application search.
         # -------------------------------------------------
 
-        self.keyboard._send_report(
-            modifier=self.keyboard.MOD_LEFT_GUI
+        self.keyboard.press(
+            self.keyboard.MOD_LEFT_GUI
         )
 
         time.sleep(

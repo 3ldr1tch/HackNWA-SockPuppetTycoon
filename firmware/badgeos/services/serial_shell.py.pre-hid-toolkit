@@ -192,7 +192,6 @@ class SerialShellService(Service):
             "usb": lambda: self._command_usb(),
             "version": lambda: self._command_version(),
             "diag": lambda: self._command_diag(parts),
-            "hid": lambda: self._command_hid(parts),
             "led": lambda: self._command_led(parts),
             "reboot": lambda: self._command_reboot(),
         }
@@ -223,8 +222,6 @@ class SerialShellService(Service):
             "  version          Show BadgeOS version",
             "  diag             Show diagnostics",
             "  diag <page>      Show one diagnostic",
-            "  hid              Show HID toolkit status",
-            "  hid host <os>    Set HID host profile",
             "  led <color>      Set LED ring color",
             "  reboot           Reboot the badge",
             "", "History:",
@@ -365,37 +362,6 @@ class SerialShellService(Service):
         mode = modes[(index + direction) % len(modes)]
         self.mode_manager.set_mode(mode)
         self._write_line("Switched to mode: {}".format(mode.name))
-
-    def _command_hid(self, parts):
-        mode = self.mode_manager.get_mode("HIDDemo")
-        if mode is None:
-            self._write_line("HIDDemo mode unavailable.")
-            return
-
-        if len(parts) == 1:
-            status = mode.get_status()
-            self._write_line("HID Toolkit")
-            self._write_line("-----------")
-            self._write_line("  host: {}".format(status["host"]))
-            self._write_line("  state: {}".format(status["state"]))
-            self._write_line("  executions: {}".format(status["executions"]))
-            self._write_line("  keyboard: {}".format(
-                "ready" if status["keyboard"] else "inactive"))
-            self._write_line("")
-            self._write_line("Usage: hid host <linux|windows|macos>")
-            return
-
-        if len(parts) == 3 and parts[1].lower() == "host":
-            try:
-                host = mode.set_host_profile(parts[2])
-            except ValueError:
-                self._write_line("Unknown HID host: {}".format(parts[2]))
-                self._write_line("Valid hosts: linux windows macos")
-                return
-            self._write_line("HID host: {}".format(host))
-            return
-
-        self._write_line("Usage: hid host <linux|windows|macos>")
 
     def _command_led(self, parts):
         if len(parts) != 2:
