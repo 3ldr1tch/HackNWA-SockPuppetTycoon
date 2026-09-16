@@ -11,10 +11,11 @@ class SerialShellService(Service):
     PROMPT = "badgeos> "
     HISTORY_LIMIT = 16
 
-    def __init__(self, led, mode_manager):
+    def __init__(self, led, mode_manager, uart_service=None):
         super().__init__("SerialShell")
         self.led = led
         self.mode_manager = mode_manager
+        self.uart_service = uart_service
         self.serial = None
         self._buffer = ""
         self._last_was_cr = False
@@ -193,6 +194,7 @@ class SerialShellService(Service):
             "version": lambda: self._command_version(),
             "diag": lambda: self._command_diag(parts),
             "hid": lambda: self._command_hid(parts),
+            "uart": lambda: self._command_uart(parts),
             "led": lambda: self._command_led(parts),
             "reboot": lambda: self._command_reboot(),
         }
@@ -225,6 +227,12 @@ class SerialShellService(Service):
             "  diag <page>      Show one diagnostic",
             "  hid              Show HID toolkit status",
             "  hid host <os>    Set HID host profile",
+            "  uart             Show UART status",
+            "  uart send <text> Send UART text",
+            "  uart read        Read UART RX",
+            "  uart hex         Read UART RX as hex",
+            "  uart baud <rate> Set UART baud rate",
+            "  uart test        Run GP2->GP3 loopback",
             "  led <color>      Set LED ring color",
             "  reboot           Reboot the badge",
             "", "History:",
@@ -396,6 +404,223 @@ class SerialShellService(Service):
             return
 
         self._write_line("Usage: hid host <linux|windows|macos>")
+
+    def _command_uart(self, parts):
+        uart = self.uart_service
+
+        if uart is None:
+            self._write_line(
+                "UART service unavailable."
+            )
+            return
+
+        if len(parts) == 1 or parts[1].lower() == "status":
+            status = uart.status
+
+            self._write_line(
+                "UART Toolkit v0.1"
+            )
+            self._write_line(
+                "-----------------"
+            )
+            self._write_line(
+                "  state: {}".format(
+                    "ready"
+                    if status["active"]
+                    else "inactive"
+                )
+            )
+            self._write_line(
+                "  TX: {}".format(
+                    status["tx"]
+                )
+            )
+            self._write_line(
+                "  RX: {}".format(
+                    status["rx"]
+                )
+            )
+            self._write_line(
+                "  baud: {}".format(
+                    status["baudrate"]
+                )
+            )
+            self._write_line(
+                "  format: 8N1"
+            )
+            self._write_line(
+                "  waiting: {} byte(s)".format(
+                    status["waiting"]
+                )
+            )
+            self._write_line(
+                "  TX total: {} byte(s)".format(
+                    status["tx_bytes"]
+                )
+            )
+            self._write_line(
+                "  RX total: {} byte(s)".format(
+                    status["rx_bytes"]
+                )
+            )
+            return
+
+        command = parts[1].lower()
+
+        if command == "send":
+            if len(parts) < 3:
+                self._write_line(
+                    "Usage: uart send <text>"
+                )
+                return
+
+            text = " ".join(
+                parts[2:]
+            )
+
+            count = uart.send(
+                text
+            )
+
+            self._write_line(
+                "TX [{}]: {}".format(
+                    count,
+                    text,
+                )
+            )
+            return
+
+        if command == "read":
+            data = uart.read()
+
+            if not data:
+                self._write_line(
+                    "RX: no data"
+                )
+                return
+
+            try:
+                display = data.decode(
+                    "utf-8"
+                )
+            except Exception:
+                display = repr(
+                    data
+                )
+
+            self._write_line(
+                "RX [{}]: {}".format(
+                    len(data),
+                    display,
+                )
+            )
+            return
+
+        if command == "hex":
+            data = uart.read()
+
+            if not data:
+                self._write_line(
+                    "RX: no data"
+                )
+                return
+
+            values = " ".join(
+                "{:02X}".format(value)
+                for value in data
+            )
+
+            self._write_line(
+                "RX [{}]: {}".format(
+                    len(data),
+                    values,
+                )
+            )
+            return
+
+        if command == "baud":
+            if len(parts) != 3:
+                self._write_line(
+                    "Usage: uart baud <rate>"
+                )
+                return
+
+            try:
+                baudrate = int(
+                    parts[2]
+                )
+
+                uart.set_baudrate(
+                    baudrate
+                )
+
+            except Exception as exc:
+                self._write_line(
+                    "UART baud error: {}".format(
+                        exc
+                    )
+                )
+                return
+
+            self._write_line(
+                "UART baud: {}".format(
+                    uart.baudrate
+                )
+            )
+            return
+
+        if command == "test":
+            self._write_line(
+                "UART Loopback Test"
+            )
+            self._write_line(
+                "------------------"
+            )
+            self._write_line(
+                "Connect GP2 TX -> GP3 RX"
+            )
+
+            result = uart.loopback_test()
+
+            payload = result[
+                "payload"
+            ]
+
+            received = result[
+                "received"
+            ]
+
+            self._write_line(
+                "TX [{}]: {!r}".format(
+                    result["sent"],
+                    payload,
+                )
+            )
+
+            if received is None:
+                self._write_line(
+                    "RX [0]: None"
+                )
+            else:
+                self._write_line(
+                    "RX [{}]: {!r}".format(
+                        len(received),
+                        received,
+                    )
+                )
+
+            self._write_line(
+                "Result: {}".format(
+                    "PASS"
+                    if result["passed"]
+                    else "FAIL"
+                )
+            )
+            return
+
+        self._write_line(
+            "Usage: uart <status|send|read|hex|baud|test>"
+        )
 
     def _command_led(self, parts):
         if len(parts) != 2:

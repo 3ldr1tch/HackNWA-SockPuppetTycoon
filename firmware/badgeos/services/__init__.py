@@ -8,6 +8,7 @@ from .heartbeat_controller import HeartbeatControllerService
 from .mode_manager import ModeManagerService
 from .mode_switch import ModeSwitchService
 from .serial_shell import SerialShellService
+from .uart import UARTService
 
 
 __all__ = [
@@ -17,4 +18,5 @@ __all__ = [
     "ModeManagerService",
     "ModeSwitchService",
     "SerialShellService",
+    "UARTService",
 ]

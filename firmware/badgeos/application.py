@@ -30,6 +30,7 @@ from badgeos.services import (
     ModeManagerService,
     ModeSwitchService,
     SerialShellService,
+    UARTService,
 )
 from badgeos.startup import run_startup_animation
 
@@ -59,6 +60,7 @@ class Application:
         self.mode_switch = None
 
         self.serial_shell = None
+        self.uart_service = None
 
         self.input_demo = None
         self.pulse_demo = None
@@ -185,10 +187,19 @@ class Application:
                 )
             )
 
+            self.uart_service = (
+                UARTService(
+                    board.GP2,
+                    board.GP3,
+                    baudrate=115200,
+                )
+            )
+
             self.serial_shell = (
                 SerialShellService(
                     self.led,
                     self.mode_manager,
+                    self.uart_service,
                 )
             )
 
@@ -198,6 +209,10 @@ class Application:
 
             self.scheduler.register(
                 self.mode_switch
+            )
+
+            self.scheduler.register(
+                self.uart_service
             )
 
             self.scheduler.register(
